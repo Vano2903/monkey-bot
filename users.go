@@ -26,6 +26,44 @@ func (u User) Exist() bool {
 	return result.Err() == nil
 }
 
+//will add the @typer role to the user
+func (u User) AddTyperRole(s *discordgo.Session) error {
+	guilds, err := s.UserGuilds(100, "", "")
+	if err != nil {
+		return err
+	}
+
+	for _, guild := range guilds {
+		g, _ := s.Guild(guild.ID)
+		for _, role := range g.Roles {
+			if role.Name == "typer" {
+				err = s.GuildMemberRoleAdd(guild.ID, u.UserID, role.ID)
+				return err
+			}
+		}
+	}
+	return errors.New("typer role not found")
+}
+
+//will remove the @typer role from the user
+func (u User) RemoveTyperRole(s *discordgo.Session) error {
+	guilds, err := s.UserGuilds(100, "", "")
+	if err != nil {
+		return err
+	}
+
+	for _, guild := range guilds {
+		g, _ := s.Guild(guild.ID)
+		for _, role := range g.Roles {
+			if role.Name == "typer" {
+				err = s.GuildMemberRoleRemove(guild.ID, u.UserID, role.ID)
+				return err
+			}
+		}
+	}
+	return errors.New("typer role not found")
+}
+
 //return a string for tagging the user
 func (u User) Mention(s *discordgo.Session) string {
 	mention, _ := s.User(u.UserID)

@@ -16,16 +16,24 @@ func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		elements := strings.Split(m.Content, " ")
-		if elements[0] == conf.Prefix+"partecipate" {
+
+		switch elements[0] {
+		case conf.Prefix + "partecipate":
 			PartecipateHandler(s, m, elements[1:])
-		} else if elements[0] == conf.Prefix+"update" {
+		case conf.Prefix + "update":
 			UpdateHandler(s, m, elements[1:])
-		} else if elements[0] == conf.Prefix+"quit" {
+		case conf.Prefix + "quit":
 			QuitHandler(s, m)
-		} else {
+		case conf.Prefix + "refresh":
+			RefreshHandler(s, m)
+		default:
 			_, _ = s.ChannelMessageSend(m.ChannelID, "codice sconosciuto, usa !help per sapere i codici che puoi usare")
 		}
 	}
+}
+
+func RefreshHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+
 }
 
 //register a new user in the database
@@ -45,6 +53,11 @@ func PartecipateHandler(s *discordgo.Session, m *discordgo.MessageCreate, params
 	if err != nil {
 		_, _ = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hey c'é stato un problema nella registrazione\n\n errore: %v", err.Error()))
 		return
+	}
+
+	err = u.AddTyperRole(s)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hey c'é stato un problema nell'aggiungere il ruolo\n\n errore: %v", err.Error()))
 	}
 	_, _ = s.ChannelMessageSend(m.ChannelID, u.Mention(s)+" é stato registrato correttamante")
 }
@@ -79,8 +92,11 @@ func QuitHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		_, _ = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hey c'é stato un problema nella rimozione\n\n errore: %v", err.Error()))
 		return
 	}
+	err = u.RemoveTyperRole(s)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hey c'é stato un problema nella rimozione del ruolo\n\n errore: %v", err.Error()))
+	}
 	_, _ = s.ChannelMessageSend(m.ChannelID, u.Mention(s)+", sei stato rimosso dalla classifica correttamente")
-
 }
 
 //return all codes knows by the bot
