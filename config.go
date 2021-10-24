@@ -11,10 +11,11 @@ import (
 )
 
 type BotConf struct {
-	Token  string `yaml:"token"`
-	Prefix string `yaml:"prefix"`
-	Uri    string `yaml:"uri"`
-	BotID  string
+	Token     string `yaml:"token"`
+	Prefix    string `yaml:"prefix"`
+	Uri       string `yaml:"uri"`
+	UserAgent string `yaml:"userAgent"`
+	BotID     string
 }
 
 var (

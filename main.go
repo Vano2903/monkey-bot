@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/olekukonko/tablewriter"
 )
 
 //handle all the messages coming and if it's a valid command run the command handler
@@ -24,16 +26,112 @@ func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			UpdateHandler(s, m, elements[1:])
 		case conf.Prefix + "quit":
 			QuitHandler(s, m)
-		case conf.Prefix + "refresh":
-			RefreshHandler(s, m)
+		case conf.Prefix + "pb":
+			PBHandler(s, m)
 		default:
 			_, _ = s.ChannelMessageSend(m.ChannelID, "codice sconosciuto, usa !help per sapere i codici che puoi usare")
 		}
 	}
 }
 
-func RefreshHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+//return time table and word table
+func generatePBmessage(personalBest PB) (string, string) {
+	bufTime := new(bytes.Buffer)
+	bufWords := new(bytes.Buffer)
 
+	dataTime := [][]string{}
+
+	//time section
+	if len(personalBest.Time.T15) != 0 {
+		for _, t := range personalBest.Time.T15 {
+			dataTime = append(dataTime, []string{"15 sec", t.Language, fmt.Sprint(t.Wpm), fmt.Sprint(t.Accuracy)})
+		}
+	}
+
+	if len(personalBest.Time.T30) != 0 {
+		for _, t := range personalBest.Time.T30 {
+			dataTime = append(dataTime, []string{"30 sec", t.Language, fmt.Sprint(t.Wpm), fmt.Sprint(t.Accuracy)})
+		}
+	}
+
+	if len(personalBest.Time.T60) != 0 {
+		for _, t := range personalBest.Time.T60 {
+			dataTime = append(dataTime, []string{"60 sec", t.Language, fmt.Sprint(t.Wpm), fmt.Sprint(t.Accuracy)})
+		}
+	}
+
+	if len(personalBest.Time.T120) != 0 {
+		for _, t := range personalBest.Time.T120 {
+			dataTime = append(dataTime, []string{"120 sec", t.Language, fmt.Sprint(t.Wpm), fmt.Sprint(t.Accuracy)})
+		}
+	}
+
+	table := tablewriter.NewWriter(bufTime)
+	table.SetHeader([]string{"TIPO", "LINGUA", "WPM", "PRECISIONE"})
+	table.SetAutoMergeCells(true)
+
+	for _, v := range dataTime {
+		table.Append(v)
+	}
+	table.Render()
+
+	//-------------------------------------------
+	dataWords := [][]string{}
+
+	//words section
+	if len(personalBest.Words.W10) != 0 {
+		for _, t := range personalBest.Words.W10 {
+			dataWords = append(dataWords, []string{"10 parole", t.Language, fmt.Sprint(t.Wpm), fmt.Sprint(t.Accuracy)})
+		}
+	}
+
+	if len(personalBest.Words.W25) != 0 {
+		for _, t := range personalBest.Words.W25 {
+			dataWords = append(dataWords, []string{"25 parole", t.Language, fmt.Sprint(t.Wpm), fmt.Sprint(t.Accuracy)})
+		}
+	}
+
+	if len(personalBest.Words.W50) != 0 {
+		for _, t := range personalBest.Words.W50 {
+			dataWords = append(dataWords, []string{"50 parole", t.Language, fmt.Sprint(t.Wpm), fmt.Sprint(t.Accuracy)})
+		}
+	}
+
+	if len(personalBest.Words.W100) != 0 {
+		for _, t := range personalBest.Words.W100 {
+			dataWords = append(dataWords, []string{"100 parole", t.Language, fmt.Sprint(t.Wpm), fmt.Sprint(t.Accuracy)})
+		}
+	}
+
+	table = tablewriter.NewWriter(bufWords)
+	table.SetHeader([]string{"TIPO", "LINGUA", "WPM", "PRECISIONE"})
+	table.SetAutoMergeCells(true)
+
+	for _, v := range dataWords {
+		table.Append(v)
+	}
+	table.Render()
+
+	return bufTime.String(), bufWords.String()
+}
+
+func PBHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	u, err := GetUser(m.Author.ID)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hey c'é stato un problema\n\n errore: %v", err.Error()))
+		return
+	}
+	err = u.GetPersonaBest()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hey c'é stato un problema\n\n errore: %v", err.Error()))
+		return
+	}
+
+	time, words := generatePBmessage(u.PersonalBest)
+
+	message := fmt.Sprintf("Punteggi migliori di %s\n\n**tempo:**\n```%s```\n**parole:**\n```%s```", u.Mention(s), time, words)
+
+	_, _ = s.ChannelMessageSend(m.ChannelID, message)
 }
 
 //register a new user in the database
