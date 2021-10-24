@@ -10,6 +10,10 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
+type Leaderboard struct {
+	Top15s []string
+}
+
 //handle all the messages coming and if it's a valid command run the command handler
 func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if strings.HasPrefix(m.Content, conf.Prefix) {
@@ -123,7 +127,19 @@ func PBHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func RefreshHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	users, err := GetAllTypers()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hey c'é stato un problema\n\n errore: %v", err.Error()))
+		return
+	}
 
+	for _, u := range users {
+		u.UpdatePersonalBest()
+	}
+
+	for _, u := range users {
+
+	}
 }
 
 //register a new user in the database
