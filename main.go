@@ -18,6 +18,10 @@ func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		elements := strings.Split(m.Content, " ")
 		if elements[0] == conf.Prefix+"partecipate" {
 			PartecipateHandler(s, m, elements[1:])
+		} else if elements[0] == conf.Prefix+"update" {
+			UpdateHandler(s, m, elements[1:])
+		} else if elements[0] == conf.Prefix+"quit" {
+
 		} else {
 			_, _ = s.ChannelMessageSend(m.ChannelID, "codice sconosciuto, usa !help per sapere i codici che puoi usare")
 		}
@@ -43,6 +47,32 @@ func PartecipateHandler(s *discordgo.Session, m *discordgo.MessageCreate, params
 		return
 	}
 	_, _ = s.ChannelMessageSend(m.ChannelID, u.Mention(s)+" é stato registrato correttamante")
+}
+
+//update will update user's info (discord username, password and email)
+func UpdateHandler(s *discordgo.Session, m *discordgo.MessageCreate, params []string) {
+	var u User
+	messageID := m.ID
+	err := s.ChannelMessageDelete(m.ChannelID, messageID)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("problema nel cancellare il messaggio: %v", err.Error()))
+	}
+	u.UserID = m.Author.ID
+	u.Username = m.Author.Username
+	u.Email = params[1]
+	u.Password = params[2]
+
+	err = u.UpdateUser()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hey c'é stato un problema nella modifica\n\n errore: %v", err.Error()))
+		return
+	}
+	_, _ = s.ChannelMessageSend(m.ChannelID, u.Mention(s)+", il tuo account é stato modificato correttamente")
+}
+
+
+func QuitHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+
 }
 
 //return all codes knows by the bot
