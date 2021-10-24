@@ -21,7 +21,7 @@ func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		} else if elements[0] == conf.Prefix+"update" {
 			UpdateHandler(s, m, elements[1:])
 		} else if elements[0] == conf.Prefix+"quit" {
-
+			QuitHandler(s, m)
 		} else {
 			_, _ = s.ChannelMessageSend(m.ChannelID, "codice sconosciuto, usa !help per sapere i codici che puoi usare")
 		}
@@ -70,8 +70,16 @@ func UpdateHandler(s *discordgo.Session, m *discordgo.MessageCreate, params []st
 	_, _ = s.ChannelMessageSend(m.ChannelID, u.Mention(s)+", il tuo account é stato modificato correttamente")
 }
 
-
+//remove the typer from the database
 func QuitHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	var u User
+	u.UserID = m.Author.ID
+	err := u.RemoveFromDB()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hey c'é stato un problema nella rimozione\n\n errore: %v", err.Error()))
+		return
+	}
+	_, _ = s.ChannelMessageSend(m.ChannelID, u.Mention(s)+", sei stato rimosso dalla classifica correttamente")
 
 }
 

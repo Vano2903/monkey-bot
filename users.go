@@ -63,13 +63,13 @@ func (u User) AddToDb() error {
 	return err
 }
 
+//update the user's info in the database
 func (u User) UpdateUser() error {
 	if !u.Exist() {
 		return errors.New("l'utente non é registrato")
 	}
 
 	update := bson.M{"username": u.Username, "email": u.Email, "password": u.Password}
-
 	_, err := collectionUser.UpdateOne(
 		ctxUser,
 		bson.M{"userID": u.UserID},
@@ -79,4 +79,13 @@ func (u User) UpdateUser() error {
 	)
 
 	return err
+}
+
+//remove the user from the db
+func (u User) RemoveFromDB() error {
+	_, err := collectionUser.DeleteOne(ctxUser, bson.M{"userID": u.UserID})
+	if err != nil {
+		return err
+	}
+	return nil
 }
