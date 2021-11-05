@@ -40,8 +40,8 @@ func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		elements := strings.Split(m.Content, " ")
 		switch elements[0] {
-		case conf.Prefix + "partecipate":
-			PartecipateHandler(s, m, elements[1:])
+		case conf.Prefix + "join":
+			JoineHandler(s, m, elements[1:])
 		case conf.Prefix + "update":
 			UpdateHandler(s, m, elements[1:])
 		case conf.Prefix + "quit":
@@ -288,7 +288,7 @@ func LeaderboardHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 //register a new user in the database
-func PartecipateHandler(s *discordgo.Session, m *discordgo.MessageCreate, params []string) {
+func JoineHandler(s *discordgo.Session, m *discordgo.MessageCreate, params []string) {
 	var u User
 	messageID := m.ID
 	err := s.ChannelMessageDelete(m.ChannelID, messageID)
@@ -352,7 +352,7 @@ func QuitHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 //return all codes knows by the bot
 func HelpHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
-	_, _ = s.ChannelMessageSend(m.ChannelID, "```Ciao, sono Monkey-Bot v1.0 e sono un bot scritto da vano-.- :D.\nTerró traccia dei punti e delle run fatte dai giocatori UwU.\nI codici disponibili sono:\n\t⸭ /partecipate || <email monkey-type> <password monkey-type> || => Aggiunge un giocatore alla competizione e viene assegnato il tag @typer (tranquillo, il messaggio verrá cancellato automaticamente in poco tempo, quindi le tue credenziali sono al sicuro :D )\n\t⸭ /quit => rimuove il giocatore dalla competizione (puoi rientrare in qualsiasi momento)\n\t⸭ /update || <email monkey-type> <password monkey-type> || => modifica le vecchie credenziali con quelle nuove\n\t⸭ /pb => mostra una tabella con tutti le migliori run di un giocatore\n\t⸭ /lb => mostra la leaderboard completa tra tutti gli utenti e in fondo al messaggio i punti totalizzati dagli utenti\n\nSe trovi bug o problemi usando questo bot scrivi un dm a vano-.-\n\nEd ora... che la battagl... hum la competizione abbia iniziooo :D```")
+	_, _ = s.ChannelMessageSend(m.ChannelID, "```Ciao, sono Monkey-Bot v1.0 e sono un bot scritto da vano-.- :D.\nTerró traccia dei punti e delle run fatte dai giocatori UwU.\nI codici disponibili sono:\n\t⸭ /join || <email monkey-type> <password monkey-type> || => Aggiunge un giocatore alla competizione e viene assegnato il tag @typer (tranquillo, il messaggio verrá cancellato automaticamente in poco tempo, quindi le tue credenziali sono al sicuro :D )\n\t⸭ /quit => rimuove il giocatore dalla competizione (puoi rientrare in qualsiasi momento)\n\t⸭ /update || <email monkey-type> <password monkey-type> || => modifica le vecchie credenziali con quelle nuove\n\t⸭ /pb => mostra una tabella con tutte le migliori run di un giocatore\n\t⸭ /lb => mostra la leaderboard completa tra tutti gli utenti e in fondo al messaggio i punti totalizzati dagli utenti\n\nSe trovi bug o problemi usando questo bot scrivi un dm a vano-.-\n\nEd ora... che la battagl... hum la competizione abbia iniziooo :D```")
 }
 
 //main
