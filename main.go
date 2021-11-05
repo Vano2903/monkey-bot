@@ -50,6 +50,8 @@ func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			PBHandler(s, m)
 		case conf.Prefix + "lb":
 			LeaderboardHandler(s, m)
+		case conf.Prefix + "help":
+			HelpHandler(s, m)
 		default:
 			_, _ = s.ChannelMessageSend(m.ChannelID, "codice sconosciuto, usa !help per sapere i codici che puoi usare")
 		}
@@ -350,7 +352,7 @@ func QuitHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 //return all codes knows by the bot
 func HelpHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
-	_, _ = s.ChannelMessageSend(m.ChannelID, "```\nCiao sono HAIbot e sono un bot scritto da VanoUwU, il mio compito é automatizzare l'invio di codici hentai al database di HAI\n I codici disponibili sono:\n\t⸭ !add \"codice\" ⇒ aggiungi un codice al database di HAI con \"IsCollection\" settato a false di default\n\t⸭ !add \"codice\" \"bool\" ⇒ aggiungi un codice al database di HAI con \"IsCollection\" settato al valore inserito nel boleano e \"IsChecked\" a true\n\t⸭ !exist \"codice\" ⇒ controlla se un codice esiste o meno all'interno del'database\n\t⸭ !stats ⇒ statistiche degli hentai raccolti fino ad ora (i.e. num hentai raccolti, collezioni verificate, ...)\n\t⸭ !stat \"codice\" ⇒ visualizza tutti i parametri relativi al codice inserito\n\t⸭ !train \"codice\" bool ⇒ (COMING SOON) permette di far analizzare il codice assegnato dall'AI, il booleano deve verificare se il codice é una collezione o meno\n\t⸭ !verify \"codice\" bool ⇒ permette di verificare un codice che non é verificato mettendo il booleano a true se é una collezione e false se hentai \n\t⸭ !toVerify ⇒ ritorna la lista di tutti i codici degli hentai da verificare e il rispettivo link)\n\t⸭ !leaderboard ⇒ visualizza la leaderboard dei punti raccolti dagli utenti\n\t⸭ !points ⇒ visualizza il valore in punti di ogni azione```")
+	_, _ = s.ChannelMessageSend(m.ChannelID, "```Ciao, sono Monkey-Bot v1.0 e sono un bot scritto da vano-.- :D.\nTerró traccia dei punti e delle run fatti dai giocatori UwU.\nI codici disponibili sono:\n\t⸭ /partecipate || <email monkey-type> <password monkey-type> || => Aggiunge un giocatore alla competizione e viene assegnato il tag @typer (tranquillo, il messaggio verrá cancellato automaticamente in poco tempo, quindi le tue credenziali sono al sicuro :D )\n\t⸭ /quit => rimuove il giocatore dalla competizione (puoi rientrare in qualsiasi momento)\n\t⸭ /update || <email monkey-type> <password monkey-type> || => modifica le vecchie credenziali con quelle nuove\n\t⸭ /pb => mostra una tabella con tutti le migliori run di un giocatore\n\t⸭ /lb => mostra la leaderboard completa tra tutti gli utenti e in fondo al messaggio i punti totalizzati dagli utenti\n\nSe trovi bug o problemi usando questo bot scrivi un dm a vano-.-\n\nEd ora... che la battagl... hum la competizione abbia iniziooo :D```")
 }
 
 func main() {
