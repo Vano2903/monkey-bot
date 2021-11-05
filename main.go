@@ -58,6 +58,7 @@ func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
+//
 //return a table of the personal bests of a specific user
 func generatePBmessage(personalBest PB) string {
 	buf := new(bytes.Buffer)
