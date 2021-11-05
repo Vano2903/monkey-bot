@@ -62,7 +62,7 @@ func (u User) AddTyperRole(s *discordgo.Session) error {
 
 	g, _ := s.Guild(guilds[0].ID)
 	for _, role := range g.Roles {
-		if role.Name == "typer" {
+		if role.Name == "Typer" {
 			err = s.GuildMemberRoleAdd(guilds[0].ID, u.Userid, role.ID)
 			return err
 		}
@@ -79,7 +79,7 @@ func (u User) RemoveTyperRole(s *discordgo.Session) error {
 
 	g, _ := s.Guild(guilds[0].ID)
 	for _, role := range g.Roles {
-		if role.Name == "typer" {
+		if role.Name == "Typer" {
 			err = s.GuildMemberRoleRemove(guilds[0].ID, u.Userid, role.ID)
 			return err
 		}
