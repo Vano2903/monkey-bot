@@ -54,7 +54,6 @@ func Login(email, password string) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-
 	var jwt jwt
 	err = json.Unmarshal(body, &jwt)
 	if err != nil {

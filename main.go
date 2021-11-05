@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -14,6 +15,11 @@ type Leaderboard struct {
 	Top15s []string
 }
 
+type Sort struct {
+	Username string
+	Wpm      float64
+}
+
 //handle all the messages coming and if it's a valid command run the command handler
 func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if strings.HasPrefix(m.Content, conf.Prefix) {
@@ -22,7 +28,6 @@ func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		elements := strings.Split(m.Content, " ")
-
 		switch elements[0] {
 		case conf.Prefix + "partecipate":
 			PartecipateHandler(s, m, elements[1:])
@@ -32,15 +37,15 @@ func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			QuitHandler(s, m)
 		case conf.Prefix + "pb":
 			PBHandler(s, m)
-		case conf.Prefix + "refresh":
-			RefreshHandler(s, m)
+		case conf.Prefix + "lb":
+			LeaderboardHandler(s, m)
 		default:
 			_, _ = s.ChannelMessageSend(m.ChannelID, "codice sconosciuto, usa !help per sapere i codici che puoi usare")
 		}
 	}
 }
 
-//return a table
+//return a table of the personal bests of a specific user
 func generatePBmessage(personalBest PB) string {
 	buf := new(bytes.Buffer)
 	data := [][]string{}
@@ -73,25 +78,25 @@ func generatePBmessage(personalBest PB) string {
 	//words section
 	if len(personalBest.Words.W10) != 0 {
 		for _, t := range personalBest.Words.W10 {
-			data = append(data, []string{"10p", t.Language, fmt.Sprint(t.Wpm), fmt.Sprint(t.Accuracy)})
+			data = append(data, []string{"10w", t.Language, fmt.Sprint(t.Wpm), fmt.Sprint(t.Accuracy)})
 		}
 	}
 
 	if len(personalBest.Words.W25) != 0 {
 		for _, t := range personalBest.Words.W25 {
-			data = append(data, []string{"25p", t.Language, fmt.Sprint(t.Wpm), fmt.Sprint(t.Accuracy)})
+			data = append(data, []string{"25w", t.Language, fmt.Sprint(t.Wpm), fmt.Sprint(t.Accuracy)})
 		}
 	}
 
 	if len(personalBest.Words.W50) != 0 {
 		for _, t := range personalBest.Words.W50 {
-			data = append(data, []string{"50p", t.Language, fmt.Sprint(t.Wpm), fmt.Sprint(t.Accuracy)})
+			data = append(data, []string{"50w", t.Language, fmt.Sprint(t.Wpm), fmt.Sprint(t.Accuracy)})
 		}
 	}
 
 	if len(personalBest.Words.W100) != 0 {
 		for _, t := range personalBest.Words.W100 {
-			data = append(data, []string{"100p", t.Language, fmt.Sprint(t.Wpm), fmt.Sprint(t.Accuracy)})
+			data = append(data, []string{"100w", t.Language, fmt.Sprint(t.Wpm), fmt.Sprint(t.Accuracy)})
 		}
 	}
 
@@ -107,6 +112,7 @@ func generatePBmessage(personalBest PB) string {
 	return buf.String()
 }
 
+//handler for the /pb command
 func PBHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	u, err := GetUser(m.Author.ID)
 	if err != nil {
@@ -126,20 +132,87 @@ func PBHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	_, _ = s.ChannelMessageSend(m.ChannelID, message)
 }
 
-func RefreshHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+func SortUsersByLangAndType(users []User, lang string, t string) []Sort {
+	var toSort []Sort
+	var stats []Stats
+	for _, u := range users {
+		switch t {
+		case "15 seconds":
+			stats = u.PersonalBest.Time.T15
+		case "30 seconds":
+			stats = u.PersonalBest.Time.T30
+		case "60 seconds":
+			stats = u.PersonalBest.Time.T60
+		case "120 seconds":
+			stats = u.PersonalBest.Time.T120
+		case "10 words":
+			stats = u.PersonalBest.Words.W10
+		case "25 words":
+			stats = u.PersonalBest.Words.W25
+		case "50 words":
+			stats = u.PersonalBest.Words.W50
+		case "100 words":
+			stats = u.PersonalBest.Words.W100
+		}
+
+		for i, t := range stats {
+			if t.Language == lang {
+				var toAppend Sort
+				toAppend.Username = u.Username
+				toAppend.Wpm = stats[i].Wpm
+				toSort = append(toSort, toAppend)
+				break
+			}
+		}
+	}
+
+	sort.Slice(toSort, func(i, j int) bool {
+		return toSort[i].Wpm > toSort[j].Wpm
+	})
+	return toSort
+}
+
+func GenerateLeaderboard(s *discordgo.Session, users []User) string {
+
+	leaderboard := "**MonkeyType WPM  |  Score Board:**\n"
+	lang := []string{"english", "italian"}
+	types := []string{"15 seconds", "30 seconds", "60 seconds", "120 seconds", "10 words", "25 words", "50 words", "100 words"}
+
+	for _, l := range lang {
+		for _, t := range types {
+			sorted := SortUsersByLangAndType(users, l, t)
+			if len(sorted) > 0 {
+				leaderboard += "\n" + t + " mode - " + l + ": :alarm_clock: :flag_it:\n"
+				for i, u := range sorted {
+					switch i {
+					case 0:
+						leaderboard += ":first_place:"
+					case 1:
+						leaderboard += ":second_place:"
+					case 2:
+						leaderboard += ":third_place:"
+					}
+					leaderboard += fmt.Sprintf(" %s %.2fwpm\n", u.Username, u.Wpm) //.Mention(s)
+				}
+			}
+		}
+	}
+	return leaderboard
+}
+
+func LeaderboardHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	users, err := GetAllTypers()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hey c'é stato un problema\n\n errore: %v", err.Error()))
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hey c'é stato un problema\n\n errore: %v", err.Error()))
 		return
 	}
 
 	for _, u := range users {
-		u.UpdatePersonalBest()
+		u.GetPersonaBest()
 	}
 
-	for _, u := range users {
-
-	}
+	// fmt.Println(GenerateLeaderboard(s, users))
+	s.ChannelMessageSend(m.ChannelID, GenerateLeaderboard(s, users))
 }
 
 //register a new user in the database
@@ -150,7 +223,7 @@ func PartecipateHandler(s *discordgo.Session, m *discordgo.MessageCreate, params
 	if err != nil {
 		_, _ = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("problema nel cancellare il messaggio: %v", err.Error()))
 	}
-	u.UserID = m.Author.ID
+	u.Userid = m.Author.ID
 	u.Username = m.Author.Username
 	u.Email = params[1]
 	u.Password = params[2]
@@ -176,7 +249,7 @@ func UpdateHandler(s *discordgo.Session, m *discordgo.MessageCreate, params []st
 	if err != nil {
 		_, _ = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("problema nel cancellare il messaggio: %v", err.Error()))
 	}
-	u.UserID = m.Author.ID
+	u.Userid = m.Author.ID
 	u.Username = m.Author.Username
 	u.Email = params[1]
 	u.Password = params[2]
@@ -192,7 +265,7 @@ func UpdateHandler(s *discordgo.Session, m *discordgo.MessageCreate, params []st
 //remove the typer from the database
 func QuitHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	var u User
-	u.UserID = m.Author.ID
+	u.Userid = m.Author.ID
 	err := u.RemoveFromDB()
 	if err != nil {
 		_, _ = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hey c'é stato un problema nella rimozione\n\n errore: %v", err.Error()))

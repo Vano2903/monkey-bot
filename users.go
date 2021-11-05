@@ -11,7 +11,7 @@ import (
 
 type User struct {
 	ID           primitive.ObjectID `bson:"_id, omitempty" json:"-"`                               //mongo id
-	UserID       string             `bson:"userID, omitempty"json:"userID, omitempty"`             //discord id
+	Userid       string             `bson:"userid, omitempty"json:"userid, omitempty"`             //discord id
 	Username     string             `bson:"username, omitempty"json:"username, omitempty"`         //discord username
 	Email        string             `bson:"email, omitempty"json:"email, omitempty"`               //monkey type email
 	Password     string             `bson:"password, omitempty"json:"password, omitempty"`         //monkey type password
@@ -48,7 +48,7 @@ type Stats struct {
 //check if the user is already in the database (discord id)
 func (u User) Exist() bool {
 	//search in database
-	result := collectionUser.FindOne(ctxUser, bson.M{"userID": u.UserID})
+	result := collectionUser.FindOne(ctxUser, bson.M{"userid": u.Userid})
 
 	return result.Err() == nil
 }
@@ -63,7 +63,7 @@ func (u User) AddTyperRole(s *discordgo.Session) error {
 	g, _ := s.Guild(guilds[0].ID)
 	for _, role := range g.Roles {
 		if role.Name == "typer" {
-			err = s.GuildMemberRoleAdd(guilds[0].ID, u.UserID, role.ID)
+			err = s.GuildMemberRoleAdd(guilds[0].ID, u.Userid, role.ID)
 			return err
 		}
 	}
@@ -80,7 +80,7 @@ func (u User) RemoveTyperRole(s *discordgo.Session) error {
 	g, _ := s.Guild(guilds[0].ID)
 	for _, role := range g.Roles {
 		if role.Name == "typer" {
-			err = s.GuildMemberRoleRemove(guilds[0].ID, u.UserID, role.ID)
+			err = s.GuildMemberRoleRemove(guilds[0].ID, u.Userid, role.ID)
 			return err
 		}
 	}
@@ -89,7 +89,7 @@ func (u User) RemoveTyperRole(s *discordgo.Session) error {
 
 //return a string for tagging the user
 func (u User) Mention(s *discordgo.Session) string {
-	mention, _ := s.User(u.UserID)
+	mention, _ := s.User(u.Userid)
 	return mention.Mention()
 }
 
@@ -105,14 +105,14 @@ func (u User) AddToDb() error {
 	}
 
 	toInsert := struct {
-		UserID       string `bson: "userID, omitempty"json: "userID, omitempty"`             //discord id
+		Userid       string `bson: "userid, omitempty"json: "userid, omitempty"`             //discord id
 		Username     string `bson: "username, omitempty"json: "username, omitempty"`         //discord username
 		Email        string `bson: "email, omitempty"json: "email, omitempty"`               //monkey type email
 		Password     string `bson: "password, omitempty"json: "password, omitempty"`         //monkey type password
 		IDToken      string `bson: "idToken, omitempty"json: "idToken, omitempty"`           //access token
 		RefreshToken string `bson: "refreshToken, omitempty"json: "refreshToken, omitempty"` //refresh token
 	}{
-		u.UserID,
+		u.Userid,
 		u.Username,
 		u.Email,
 		u.Password,
@@ -133,7 +133,7 @@ func (u User) UpdateUser() error {
 	update := bson.M{"username": u.Username, "email": u.Email, "password": u.Password}
 	_, err := collectionUser.UpdateOne(
 		ctxUser,
-		bson.M{"userID": u.UserID},
+		bson.M{"userid": u.Userid},
 		bson.D{
 			{"$set", update},
 		},
@@ -145,7 +145,7 @@ func (u User) UpdatePersonalBest() error {
 	update := bson.M{"personalBest": u.PersonalBest}
 	_, err := collectionUser.UpdateOne(
 		ctxUser,
-		bson.M{"userID": u.UserID},
+		bson.M{"userid": u.Userid},
 		bson.D{
 			{"$set", update},
 		},
@@ -157,7 +157,7 @@ func (u User) UpdateTokens() error {
 	update := bson.M{"refreshToken": u.RefreshToken, "idToken": u.IDToken}
 	_, err := collectionUser.UpdateOne(
 		ctxUser,
-		bson.M{"userID": u.UserID},
+		bson.M{"userid": u.Userid},
 		bson.D{
 			{"$set", update},
 		},
@@ -168,7 +168,7 @@ func (u User) UpdateTokens() error {
 
 //remove the user from the db
 func (u User) RemoveFromDB() error {
-	_, err := collectionUser.DeleteOne(ctxUser, bson.M{"userID": u.UserID})
+	_, err := collectionUser.DeleteOne(ctxUser, bson.M{"userid": u.Userid})
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,6 @@ func (u *User) GetPersonaBest() error {
 				if err != nil {
 					return err
 				}
-				u.UpdatePersonalBest()
 			}
 		} else {
 			u.UpdateTokens()
@@ -199,7 +198,6 @@ func (u *User) GetPersonaBest() error {
 			if err != nil {
 				return err
 			}
-			u.UpdatePersonalBest()
 		}
 	}
 	u.UpdatePersonalBest()
@@ -207,8 +205,8 @@ func (u *User) GetPersonaBest() error {
 }
 
 //given discord id will return the user saved
-func GetUser(userID string) (User, error) {
-	query := bson.M{"userID": userID}
+func GetUser(userid string) (User, error) {
+	query := bson.M{"userid": userid}
 	cur, err := collectionUser.Find(ctxUser, query)
 	if err != nil {
 		return User{}, err
