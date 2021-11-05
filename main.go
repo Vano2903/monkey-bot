@@ -53,7 +53,7 @@ func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case conf.Prefix + "help":
 			HelpHandler(s, m)
 		default:
-			_, _ = s.ChannelMessageSend(m.ChannelID, "codice sconosciuto, usa !help per sapere i codici che puoi usare")
+			_, _ = s.ChannelMessageSend(m.ChannelID, "codice sconosciuto, usa "+conf.Prefix+"help per sapere i codici che puoi usare")
 		}
 	}
 }
