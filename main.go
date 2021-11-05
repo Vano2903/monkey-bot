@@ -20,6 +20,17 @@ type Sort struct {
 	Wpm      float64
 }
 
+type Points struct {
+	Username string
+	Points   int
+	Medals   map[string]int
+}
+
+func NewPoint() Points {
+	medals := make(map[string]int)
+	return Points{Medals: medals}
+}
+
 //handle all the messages coming and if it's a valid command run the command handler
 func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if strings.HasPrefix(m.Content, conf.Prefix) {
@@ -173,30 +184,89 @@ func SortUsersByLangAndType(users []User, lang string, t string) []Sort {
 }
 
 func GenerateLeaderboard(s *discordgo.Session, users []User) string {
-
 	leaderboard := "**MonkeyType WPM  |  Score Board:**\n"
 	lang := []string{"english", "italian"}
 	types := []string{"15 seconds", "30 seconds", "60 seconds", "120 seconds", "10 words", "25 words", "50 words", "100 words"}
+
+	var points []Points
+	pointsValues := []int{4, 2, 1}
+
+	for _, u := range users {
+		toAppend := NewPoint()
+		toAppend.Username = u.Username
+		// toAppend.Medals["Gold"] = 0
+		// toAppend.Medals["Silver"] = 0
+		// toAppend.Medals["Bronze"] = 0
+		points = append(points, toAppend)
+	}
 
 	for _, l := range lang {
 		for _, t := range types {
 			sorted := SortUsersByLangAndType(users, l, t)
 			if len(sorted) > 0 {
-				leaderboard += "\n" + t + " mode - " + l + ": :alarm_clock: :flag_it:\n"
+				if strings.HasSuffix(t, "words") {
+					leaderboard += "\n" + t + " mode - " + l + ": :pencil: "
+				} else {
+					leaderboard += "\n" + t + " mode - " + l + ": :alarm_clock: "
+				}
+
+				if l == "italian" {
+					leaderboard += ":flag_it: \n"
+				} else {
+					leaderboard += ":flag_gb: \n"
+				}
+
 				for i, u := range sorted {
 					switch i {
 					case 0:
 						leaderboard += ":first_place:"
+						for j := 0; j < len(points); j++ {
+							if points[j].Username == u.Username {
+								points[j].Points += pointsValues[i]
+								points[j].Medals["Gold"] += 1
+							}
+						}
 					case 1:
 						leaderboard += ":second_place:"
+						for j := 0; j < len(points); j++ {
+							if points[j].Username == u.Username {
+								points[j].Points += pointsValues[i]
+								points[j].Medals["Silver"] += 1
+							}
+						}
 					case 2:
 						leaderboard += ":third_place:"
+						for j := 0; j < len(points); j++ {
+							if points[j].Username == u.Username {
+								points[j].Points += pointsValues[i]
+								points[j].Medals["Bronze"] += 1
+							}
+						}
 					}
 					leaderboard += fmt.Sprintf(" %s %.2fwpm\n", u.Username, u.Wpm) //.Mention(s)
 				}
 			}
 		}
 	}
+
+	leaderboard += "\n\n**MonkeyType WPM  |  Medal Table:**\n\n"
+
+	sort.Slice(points, func(i, j int) bool {
+		return points[i].Points > points[j].Points
+	})
+
+	for i, p := range points {
+		switch i {
+		case 0:
+			leaderboard += ":first_place:"
+		case 1:
+			leaderboard += ":second_place:"
+		case 2:
+			leaderboard += ":third_place:"
+		}
+		leaderboard += fmt.Sprintf(" %s %dpt. (%d Gold, %d Silver, %d Bronze)\n", p.Username, p.Points, p.Medals["Gold"], p.Medals["Silver"], p.Medals["Bronze"]) //.Mention(s)
+	}
+
 	return leaderboard
 }
 
